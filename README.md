@@ -23,9 +23,11 @@
 
 #### 使用说明
 
+**所有配置均在$HOME/.config.yaml**
+
 1.  make install
 2.  cmd
-3. 配置文件有DEMO，在$HOME/.config.yaml 
+3.  配置文件有DEMO，在$HOME/.config.yaml 
 
 #### 参与贡献
 
