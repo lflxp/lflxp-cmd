@@ -2,6 +2,8 @@ package pkg
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/c-bata/go-prompt"
@@ -66,6 +68,11 @@ func FirstCommandFunc(in prompt.Document, args []string) []prompt.Suggest {
 	}
 
 	first := args[0]
+	// 判断是否是内置命令解析
+	tmp_rs := FilterInnerCmd(args)
+	if tmp_rs != nil {
+		return prompt.FilterFuzzy(tmp_rs, args[len(args)-1], true)
+	}
 	// 过滤 -
 	// 截取
 	// 获取并判断
@@ -297,4 +304,129 @@ func GetCommon(cmd, target string) string {
 		return result
 	}
 	return "子目录，非功能性命令"
+}
+
+// TODO: 内置命令解析
+func FilterInnerCmd(args []string) []prompt.Suggest {
+	var rs []prompt.Suggest
+	switch args[0] {
+	case "cd":
+		rs = ParseCd(args[1])
+	case "ls":
+		rs = ParseLs(args[1])
+	case "ll":
+		rs = ParseLs(args[1])
+	case "vi":
+		rs = ParseLs(args[1])
+	}
+	return rs
+}
+
+// 判断所给路径是否为文件夹
+func IsDir(path string) bool {
+	s, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+	return s.IsDir()
+}
+
+// 判断所给路径是否为文件
+func IsFile(path string) bool {
+	return !IsDir(path)
+}
+
+func ParseCd(path string) []prompt.Suggest {
+	var rs []prompt.Suggest
+	dir, err := filepath.Abs(filepath.Dir(path))
+	if err != nil {
+		log.Error(err)
+		return rs
+	}
+	//获取当前目录下的文件或目录名(包含路径)
+	filepathNames, err := filepath.Glob(filepath.Join(dir, "*"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	rs = []prompt.Suggest{
+		prompt.Suggest{
+			Text:        ".",
+			Description: "当前目录",
+		},
+		prompt.Suggest{
+			Text:        "..",
+			Description: "上级目录",
+		},
+		// prompt.Suggest{
+		// 	Text:        "-",
+		// 	Description: "上次目录",
+		// },
+	}
+	for i := range filepathNames {
+		// fmt.Println(filepathNames[i]) //打印path
+		if IsDir(filepathNames[i]) {
+			// tmp := strings.Split(filepathNames[i], string(os.PathSeparator))
+			rs = append(rs, prompt.Suggest{
+				// Text: tmp[len(tmp)-1],
+				Text:        filepathNames[i],
+				Description: filepathNames[i],
+			})
+		}
+	}
+
+	//获取当前目录下的所有文件或目录信息
+	// rs = []prompt.Suggest{}
+	// filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+	// 	fmt.Println(path)
+	// 	rs = append(rs, prompt.Suggest{
+	// 		Text: info.Name(),
+	// 	})
+	// 	return nil
+	// })
+	return rs
+}
+
+func ParseLs(path string) []prompt.Suggest {
+	var rs []prompt.Suggest
+	dir, err := filepath.Abs(filepath.Dir(path))
+	if err != nil {
+		log.Error(err)
+		return rs
+	}
+	//获取当前目录下的文件或目录名(包含路径)
+	filepathNames, err := filepath.Glob(filepath.Join(dir, "*"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	rs = []prompt.Suggest{}
+	for i := range filepathNames {
+		// fmt.Println(filepathNames[i]) //打印path
+		if IsDir(filepathNames[i]) {
+			tmp := strings.Split(filepathNames[i], string(os.PathSeparator))
+			rs = append(rs, prompt.Suggest{
+				Text:        tmp[len(tmp)-1],
+				Description: "dir",
+			})
+		}
+		if IsFile(filepathNames[i]) {
+			tmp := strings.Split(filepathNames[i], string(os.PathSeparator))
+			rs = append(rs, prompt.Suggest{
+				Text:        tmp[len(tmp)-1],
+				Description: "file",
+			})
+		}
+	}
+
+	//获取当前目录下的所有文件或目录信息
+	// rs = []prompt.Suggest{}
+	// filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+	// 	fmt.Println(path)
+	// 	rs = append(rs, prompt.Suggest{
+	// 		Text: info.Name(),
+	// 	})
+	// 	return nil
+	// })
+	return rs
 }

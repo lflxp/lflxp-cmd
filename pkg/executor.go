@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"fmt"
+	"os"
 	"strings"
 )
 
@@ -35,6 +36,55 @@ func executor(in string) {
 			thisisit()
 		}
 	}
-	LivePrefixState.LivePrefix = in + "> "
+	LivePrefixState.LivePrefix = "➜ " + GetCurrPath(in) + "> "
 	LivePrefixState.IsEnable = true
+}
+
+func GetCurrPath(in string) string {
+	var rs string
+	t := strings.Split(in, " ")
+	if t[0] == "cd" {
+		if len(t) == 1 {
+			err := Chdir("~")
+			if err != nil {
+				return err.Error()
+			}
+		} else if len(t) > 1 {
+			err := Chdir(t[1])
+			if err != nil {
+				return err.Error()
+			}
+		}
+		if len(t) == 0 {
+			rs = ""
+		} else if len(t) == 1 {
+			rs = t[0]
+		} else if len(t) > 1 {
+			rs = strings.Join(t[1:], " ")
+		}
+	} else {
+		rs = in
+	}
+	// dir, _ := os.Executable()
+	// exPath := filepath.Dir(dir)
+	// if exPath == string(os.PathSeparator) {
+	// 	return string(os.PathSeparator)
+	// }
+	// tmp := strings.Split(exPath, string(os.PathSeparator))
+	// return tmp[len(tmp)-1]
+
+	return rs
+}
+
+// Chdir 将程序工作路径修改成程序所在位置
+func Chdir(in string) error {
+	// fmt.Println(in)
+	// dir, err := filepath.Abs(filepath.Dir(in))
+	// if err != nil {
+	// 	return err
+	// }
+
+	// fmt.Println(dir)
+	err := os.Chdir(in)
+	return err
 }

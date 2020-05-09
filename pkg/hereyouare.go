@@ -8,11 +8,11 @@ func Exec() {
 	p := prompt.New(
 		executor,
 		completer,
-		prompt.OptionPrefix(">>> "),
+		prompt.OptionPrefix("➜ "),
 		prompt.OptionLivePrefix(changeLivePrefix),
 		prompt.OptionTitle("pkg"),
-		prompt.OptionPrefixTextColor(prompt.Green),
-		prompt.OptionInputTextColor(prompt.Blue),
+		prompt.OptionPrefixTextColor(prompt.Red),
+		prompt.OptionInputTextColor(prompt.LightGray),
 	)
 	p.Run()
 }
