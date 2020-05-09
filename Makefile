@@ -9,8 +9,10 @@ pull: clean
 	git pull origin $(shell git branch|grep '*'|awk '{print $$2}')
 
 install: clean
-	cp cmd/main.go . && go install
-	lflxp-cmd -h
+	# cp cmd/main.go . && go install
+	cd cmd && go build && sudo rm -f /usr/sbin/cmd && sudo mv cmd /usr/sbin/
+	# lflxp-cmd -h
+	cmd -h
 
 run:
 	cd cmd && go run main.go

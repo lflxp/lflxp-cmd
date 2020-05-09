@@ -61,7 +61,8 @@ func initCommands() {
 func FirstCommandFunc(in prompt.Document, args []string) []prompt.Suggest {
 	if len(args) <= 1 {
 		// log.Error("alias", Config.GetString(fmt.Sprintf("%s.alias", in.Text)))
-		return prompt.FilterHasPrefix(Commands, args[0], true)
+		// return prompt.FilterHasPrefix(Commands, args[0], true)
+		return prompt.FilterFuzzy(Commands, args[0], true)
 	}
 
 	first := args[0]
@@ -280,7 +281,8 @@ func FirstCommandFunc(in prompt.Document, args []string) []prompt.Suggest {
 					}
 				}
 			}
-			return prompt.FilterHasPrefix(subcommands, second, true)
+			// return prompt.FilterHasPrefix(subcommands, second, true)
+			return prompt.FilterFuzzy(subcommands, second, true)
 		}
 	}
 

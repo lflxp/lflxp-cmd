@@ -11,6 +11,8 @@ func Exec() {
 		prompt.OptionPrefix(">>> "),
 		prompt.OptionLivePrefix(changeLivePrefix),
 		prompt.OptionTitle("pkg"),
+		prompt.OptionPrefixTextColor(prompt.Green),
+		prompt.OptionInputTextColor(prompt.Blue),
 	)
 	p.Run()
 }
