@@ -71,7 +71,7 @@ func FirstCommandFunc(in prompt.Document, args []string) []prompt.Suggest {
 	// 判断是否是内置命令解析
 	tmp_rs := FilterInnerCmd(args)
 	if tmp_rs != nil {
-		return prompt.FilterFuzzy(tmp_rs, args[len(args)-1], true)
+		return prompt.FilterFuzzy(tmp_rs, strings.ReplaceAll(args[len(args)-1], "/", ""), true)
 	}
 	// 过滤 -
 	// 截取
@@ -311,13 +311,15 @@ func FilterInnerCmd(args []string) []prompt.Suggest {
 	var rs []prompt.Suggest
 	switch args[0] {
 	case "cd":
-		rs = ParseCd(args[1])
+		rs = ParseCd(args[len(args)-1], "cd")
 	case "ls":
-		rs = ParseLs(args[1])
+		rs = ParseCd(args[len(args)-1], "ls")
 	case "ll":
 		rs = ParseLs(args[1])
 	case "vi":
-		rs = ParseLs(args[1])
+		rs = ParseCd(args[len(args)-1], "vi")
+	case "mv":
+		rs = ParseCd(args[len(args)-1], "mv")
 	}
 	return rs
 }
@@ -336,9 +338,16 @@ func IsFile(path string) bool {
 	return !IsDir(path)
 }
 
-func ParseCd(path string) []prompt.Suggest {
+// 解析内置命令
+// TODO: 哪里不能进行搜索了
+func ParseCd(path, cmd string) []prompt.Suggest {
 	var rs []prompt.Suggest
-	dir, err := filepath.Abs(filepath.Dir(path))
+	back := path
+	if !strings.HasPrefix(path, "/") && path != "" && path != " " {
+		dir, _ := os.Getwd()
+		back = fmt.Sprintf("%s/%s", dir, back)
+	}
+	dir, err := filepath.Abs(filepath.Dir(back))
 	if err != nil {
 		log.Error(err)
 		return rs
@@ -349,6 +358,8 @@ func ParseCd(path string) []prompt.Suggest {
 		log.Fatal(err)
 	}
 
+	log.Debug(filepathNames)
+	log.Debugf("path==%s==  cmd==%s==", path, cmd)
 	rs = []prompt.Suggest{
 		prompt.Suggest{
 			Text:        ".",
@@ -366,12 +377,66 @@ func ParseCd(path string) []prompt.Suggest {
 	for i := range filepathNames {
 		// fmt.Println(filepathNames[i]) //打印path
 		if IsDir(filepathNames[i]) {
-			// tmp := strings.Split(filepathNames[i], string(os.PathSeparator))
-			rs = append(rs, prompt.Suggest{
-				// Text: tmp[len(tmp)-1],
-				Text:        filepathNames[i],
-				Description: filepathNames[i],
-			})
+			// 判断是否是绝对路径
+			if strings.HasPrefix(path, "/") {
+				log.Debugf("1 %s", filepathNames[i])
+				rs = append(rs, prompt.Suggest{
+					Text: filepathNames[i],
+					// Description: filepathNames[i],
+				})
+			} else {
+				tmp := strings.Split(filepathNames[i], string(os.PathSeparator))
+				log.Debugf("2 %s %s", filepathNames[i], tmp[len(tmp)-1])
+				// 判断末尾是否含有/
+				if strings.HasSuffix(path, "/") {
+					t1 := prompt.Suggest{
+						Text: fmt.Sprintf("%s%s", path, tmp[len(tmp)-1]),
+					}
+					if cmd == "cd" {
+						rs = append(rs, t1)
+					} else if cmd == "ls" || cmd == "mv" || cmd == "vi" {
+						t1.Description = "dir"
+						rs = append(rs, t1)
+					}
+				} else {
+					t1 := prompt.Suggest{
+						Text: tmp[len(tmp)-1],
+					}
+					if cmd == "cd" {
+						rs = append(rs, t1)
+					} else if cmd == "ls" || cmd == "mv" || cmd == "vi" {
+						t1.Description = "dir"
+						rs = append(rs, t1)
+					}
+				}
+			}
+		}
+		if IsFile(filepathNames[i]) {
+			if strings.HasPrefix(path, "/") {
+				log.Debugf("3 %s", filepathNames[i])
+				rs = append(rs, prompt.Suggest{
+					Text: filepathNames[i],
+				})
+			} else {
+				if cmd == "ls" || cmd == "mv" || cmd == "vi" {
+					log.Debugf("4 %s", filepathNames[i])
+					tmp := strings.Split(filepathNames[i], string(os.PathSeparator))
+					// 判断末尾是否含有/
+					if strings.HasSuffix(path, "/") {
+						log.Debugf("5 %s", fmt.Sprintf("%s%s", path, tmp[len(tmp)-1]))
+						rs = append(rs, prompt.Suggest{
+							Text:        fmt.Sprintf("%s%s", path, tmp[len(tmp)-1]),
+							Description: "file",
+						})
+					} else {
+						log.Debugf("6 %s", tmp[len(tmp)-1])
+						rs = append(rs, prompt.Suggest{
+							Text:        tmp[len(tmp)-1],
+							Description: "file",
+						})
+					}
+				}
+			}
 		}
 	}
 
