@@ -43,7 +43,7 @@ func executor(in string) {
 func GetCurrPath(in string) string {
 	var rs string
 	t := strings.Split(in, " ")
-	if t[0] == "cd" {
+	if t[0] == "cd" || t[0] == "ls" || t[0] == "vi" {
 		if len(t) == 1 {
 			err := Chdir("~")
 			if err != nil {
@@ -65,6 +65,8 @@ func GetCurrPath(in string) string {
 	} else {
 		rs = in
 	}
+	return rs
+
 	// dir, _ := os.Executable()
 	// exPath := filepath.Dir(dir)
 	// if exPath == string(os.PathSeparator) {
@@ -72,8 +74,6 @@ func GetCurrPath(in string) string {
 	// }
 	// tmp := strings.Split(exPath, string(os.PathSeparator))
 	// return tmp[len(tmp)-1]
-
-	return rs
 }
 
 // Chdir 将程序工作路径修改成程序所在位置
